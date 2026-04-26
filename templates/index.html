@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Global Internet Usage & Economic Development</title>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1e3a5f 0%, #065a82 100%);
+      padding: 2rem 2.5rem 1.5rem;
+      border-bottom: 2px solid #1c7293;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      margin-top: 0.4rem;
+      color: #93c5fd;
+      font-size: 0.95rem;
+    }
+
+    header .meta {
+      margin-top: 0.8rem;
+      font-size: 0.8rem;
+      color: #7dd3fc;
+    }
+
+    .controls {
+      background: #1e293b;
+      padding: 1.2rem 2.5rem;
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+      flex-wrap: wrap;
+      border-bottom: 1px solid #334155;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .control-group label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    .control-group select, .control-group input[type=range] {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 0.4rem 0.7rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      min-width: 180px;
+    }
+
+    .year-display {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #38bdf8;
+      min-width: 55px;
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 1.2rem;
+      padding: 1.5rem 2rem;
+    }
+
+    .chart-card {
+      background: #1e293b;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      overflow: hidden;
+    }
+
+    .chart-card.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .chart-header {
+      padding: 1rem 1.2rem 0.5rem;
+      border-bottom: 1px solid #334155;
+    }
+
+    .chart-header h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+
+    .chart-header p {
+      font-size: 0.78rem;
+      color: #64748b;
+      margin-top: 0.2rem;
+    }
+
+    .chart-body {
+      padding: 0.5rem;
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 1.5rem;
+      padding: 1rem 2rem;
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1.2rem;
+      color: #475569;
+      font-size: 0.78rem;
+      border-top: 1px solid #1e293b;
+    }
+
+    #loading {
+      position: fixed; inset: 0;
+      background: #0f172a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      gap: 1rem;
+    }
+
+    .spinner {
+      width: 48px; height: 48px;
+      border: 4px solid #334155;
+      border-top-color: #38bdf8;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #loading p { color: #94a3b8; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <p>Loading visualization data...</p>
+</div>
+
+<header>
+  <h1>🌐 Global Internet Usage &amp; Economic Development</h1>
+  <p>Exploring the relationship between GDP per capita and internet access across 50 countries (2000–2023)</p>
+  <div class="meta">Group 2 &nbsp;|&nbsp; Aadarsh Shankar, Divy Jhanjhari &nbsp;|&nbsp; Data Source: World Bank Open Data</div>
+</header>
+
+<div class="stats-bar" id="statsBar">
+  <div class="stat"><span class="stat-value" id="statCountries">50</span><span class="stat-label">Countries</span></div>
+  <div class="stat"><span class="stat-value" id="statAvgInternet">—</span><span class="stat-label">Avg Internet %</span></div>
+  <div class="stat"><span class="stat-value" id="statAvgGDP">—</span><span class="stat-label">Avg GDP/Capita</span></div>
+  <div class="stat"><span class="stat-value" id="statTopCountry">—</span><span class="stat-label">Highest Internet Access</span></div>
+</div>
+
+<div class="controls">
+  <div class="control-group">
+    <label>Year (Scatter Plot)</label>
+    <div style="display:flex; align-items:center; gap:0.8rem;">
+      <input type="range" id="yearSlider" min="2000" max="2023" value="2023" step="1" style="width:200px;" />
+      <span class="year-display" id="yearDisplay">2023</span>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <label>Filter by Income Group</label>
+    <select id="incomeFilter">
+      <option value="All">All Income Groups</option>
+      <option value="High income">High Income</option>
+      <option value="Upper middle income">Upper Middle Income</option>
+      <option value="Lower middle income">Lower Middle Income</option>
+      <option value="Low income">Low Income</option>
+    </select>
+  </div>
+
+  <div class="control-group">
+    <label>Filter by Region (Line Chart)</label>
+    <select id="regionFilter">
+      <option value="All">All Regions</option>
+    </select>
+  </div>
+</div>
+
+<div class="charts-grid">
+  <!-- Scatter Plot: full width -->
+  <div class="chart-card full-width">
+    <div class="chart-header">
+      <h2>📊 Scatter Plot — GDP per Capita vs Internet Usage</h2>
+      <p>Each bubble = one country. Bubble size = GDP per capita. Color = Region. Drag the year slider above to animate over time.</p>
+    </div>
+    <div class="chart-body"><div id="scatterChart"></div></div>
+  </div>
+
+  <!-- Line Chart -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <h2>📈 Line Chart — Internet Growth Over Time</h2>
+      <p>Average internet usage (%) per region from 2000 to 2023. Toggle regions using the filter above.</p>
+    </div>
+    <div class="chart-body"><div id="lineChart"></div></div>
+  </div>
+
+  <!-- Bar Chart -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <h2>📊 Bar Chart — Regional Internet Comparison (2023)</h2>
+      <p>Average internet usage by world region for the latest year. Hover bars for exact values.</p>
+    </div>
+    <div class="chart-body"><div id="barChart"></div></div>
+  </div>
+</div>
+
+<footer>
+  Data: World Bank Open Data &nbsp;|&nbsp; Visualization by Group 2 — Aadarsh Shankar, Divy Jhanjhari &nbsp;|&nbsp; Data Visualization, 2026
+</footer>
+
+<script>
+// ─── Color palette per region ──────────────────────────────────────────────
+const REGION_COLORS = {
+  "North America":               "#38bdf8",
+  "Europe & Central Asia":       "#818cf8",
+  "East Asia & Pacific":         "#34d399",
+  "Latin America & Caribbean":   "#fb923c",
+  "South Asia":                  "#f472b6",
+  "Sub-Saharan Africa":          "#facc15",
+  "Middle East & North Africa":  "#a78bfa",
+};
+
+const INCOME_COLORS = {
+  "High income":            "#38bdf8",
+  "Upper middle income":    "#34d399",
+  "Lower middle income":    "#fb923c",
+  "Low income":             "#f87171",
+};
+
+const PLOTLY_BG   = "#1e293b";
+const PLOTLY_FONT = "#cbd5e1";
+const PLOTLY_GRID = "#334155";
+
+let ALL_DATA = [];
+let currentYear = 2023;
+
+// ─── Fetch data and initialise ─────────────────────────────────────────────
+fetch("/api/data")
+  .then(r => r.json())
+  .then(data => {
+    ALL_DATA = data;
+    populateRegionFilter(data);
+    updateAll();
+    document.getElementById("loading").style.display = "none";
+  });
+
+// ─── Controls ─────────────────────────────────────────────────────────────
+document.getElementById("yearSlider").addEventListener("input", e => {
+  currentYear = +e.target.value;
+  document.getElementById("yearDisplay").textContent = currentYear;
+  updateScatter();
+  updateStats();
+});
+
+document.getElementById("incomeFilter").addEventListener("change", () => {
+  updateScatter();
+});
+
+document.getElementById("regionFilter").addEventListener("change", () => {
+  updateLine();
+});
+
+// ─── Helpers ──────────────────────────────────────────────────────────────
+function populateRegionFilter(data) {
+  const regions = [...new Set(data.map(d => d["Region"]))].sort();
+  const sel = document.getElementById("regionFilter");
+  regions.forEach(r => {
+    const opt = document.createElement("option");
+    opt.value = r; opt.textContent = r;
+    sel.appendChild(opt);
+  });
+}
+
+function updateAll() {
+  updateScatter();
+  updateLine();
+  updateBar();
+  updateStats();
+}
+
+// ─── Scatter Plot ──────────────────────────────────────────────────────────
+function updateScatter() {
+  const incomeFilter = document.getElementById("incomeFilter").value;
+
+  let yearData = ALL_DATA.filter(d => d["Year"] === currentYear);
+  if (incomeFilter !== "All") {
+    yearData = yearData.filter(d => d["Income Group"] === incomeFilter);
+  }
+
+  // Group by region
+  const regions = [...new Set(yearData.map(d => d["Region"]))].sort();
+  const traces = regions.map(region => {
+    const pts = yearData.filter(d => d["Region"] === region);
+    return {
+      type: "scatter",
+      mode: "markers",
+      name: region,
+      x: pts.map(d => d["GDP per Capita"]),
+      y: pts.map(d => d["Internet Users"]),
+      text: pts.map(d => d["Country Name"]),
+      marker: {
+        color: REGION_COLORS[region] || "#94a3b8",
+        size: pts.map(d => Math.max(8, Math.sqrt(d["GDP per Capita"]) * 0.35)),
+        opacity: 0.85,
+        line: { width: 1, color: "#0f172a" }
+      },
+      hovertemplate:
+        "<b>%{text}</b><br>" +
+        "GDP/capita: $%{x:,.0f}<br>" +
+        "Internet: %{y:.1f}%<extra></extra>",
+    };
+  });
+
+  const layout = scatterLayout(`GDP per Capita vs Internet Usage — ${currentYear}`);
+  layout.xaxis.title = { text: "GDP per Capita (USD)", font: { color: PLOTLY_FONT } };
+  layout.yaxis.title = { text: "Internet Users (% of population)", font: { color: PLOTLY_FONT } };
+  layout.xaxis.type = "log";
+
+  Plotly.react("scatterChart", traces, layout, { responsive: true, displayModeBar: false });
+}
+
+// ─── Line Chart ────────────────────────────────────────────────────────────
+function updateLine() {
+  const regionFilter = document.getElementById("regionFilter").value;
+  const years = [...new Set(ALL_DATA.map(d => d["Year"]))].sort();
+
+  let regions = [...new Set(ALL_DATA.map(d => d["Region"]))].sort();
+  if (regionFilter !== "All") regions = [regionFilter];
+
+  const traces = regions.map(region => {
+    const regionData = ALL_DATA.filter(d => d["Region"] === region);
+    const avgByYear = years.map(y => {
+      const pts = regionData.filter(d => d["Year"] === y);
+      return pts.length ? pts.reduce((s, d) => s + d["Internet Users"], 0) / pts.length : null;
+    });
+    return {
+      type: "scatter",
+      mode: "lines+markers",
+      name: region,
+      x: years,
+      y: avgByYear,
+      line: { color: REGION_COLORS[region] || "#94a3b8", width: 2.5, shape: "spline" },
+      marker: { size: 5, color: REGION_COLORS[region] || "#94a3b8" },
+      hovertemplate: `<b>${region}</b><br>Year: %{x}<br>Avg Internet: %{y:.1f}%<extra></extra>`,
+    };
+  });
+
+  const layout = baseLayout("Internet Growth by Region (2000–2023)");
+  layout.yaxis.title = { text: "Avg Internet Users (%)", font: { color: PLOTLY_FONT } };
+  layout.xaxis.title = { text: "Year", font: { color: PLOTLY_FONT } };
+  layout.height = 360;
+
+  Plotly.react("lineChart", traces, layout, { responsive: true, displayModeBar: false });
+}
+
+// ─── Bar Chart ─────────────────────────────────────────────────────────────
+function updateBar() {
+  const latest = ALL_DATA.filter(d => d["Year"] === 2023);
+  const regions = [...new Set(latest.map(d => d["Region"]))].sort();
+
+  const avgs = regions.map(r => {
+    const pts = latest.filter(d => d["Region"] === r);
+    return pts.reduce((s, d) => s + d["Internet Users"], 0) / pts.length;
+  });
+
+  const sorted = regions
+    .map((r, i) => ({ region: r, avg: avgs[i] }))
+    .sort((a, b) => b.avg - a.avg);
+
+  const trace = {
+    type: "bar",
+    x: sorted.map(d => d.avg),
+    y: sorted.map(d => d.region),
+    orientation: "h",
+    marker: {
+      color: sorted.map(d => REGION_COLORS[d.region] || "#94a3b8"),
+      opacity: 0.9,
+    },
+    text: sorted.map(d => `${d.avg.toFixed(1)}%`),
+    textposition: "outside",
+    textfont: { color: PLOTLY_FONT, size: 11 },
+    hovertemplate: "<b>%{y}</b><br>Avg Internet: %{x:.1f}%<extra></extra>",
+  };
+
+  const layout = baseLayout("Regional Internet Adoption — 2023");
+  layout.xaxis.title = { text: "Avg Internet Users (%)", font: { color: PLOTLY_FONT } };
+  layout.xaxis.range = [0, 105];
+  layout.margin = { l: 195, r: 50, t: 30, b: 40 };
+  layout.height = 360;
+  layout.showlegend = false;
+
+  Plotly.react("barChart", [trace], layout, { responsive: true, displayModeBar: false });
+}
+
+// ─── Stats Bar ─────────────────────────────────────────────────────────────
+function updateStats() {
+  const yearData = ALL_DATA.filter(d => d["Year"] === currentYear);
+  if (!yearData.length) return;
+
+  const avgInternet = yearData.reduce((s, d) => s + d["Internet Users"], 0) / yearData.length;
+  const avgGDP = yearData.reduce((s, d) => s + d["GDP per Capita"], 0) / yearData.length;
+  const topCountry = yearData.reduce((a, b) => a["Internet Users"] > b["Internet Users"] ? a : b);
+
+  document.getElementById("statAvgInternet").textContent = avgInternet.toFixed(1) + "%";
+  document.getElementById("statAvgGDP").textContent = "$" + Math.round(avgGDP).toLocaleString();
+  document.getElementById("statTopCountry").textContent = topCountry["Country Name"];
+}
+
+// ─── Layout helpers ─────────────────────────────────────────────────────────
+function baseLayout(title) {
+  return {
+    title: { text: title, font: { color: PLOTLY_FONT, size: 13 }, x: 0.01 },
+    paper_bgcolor: PLOTLY_BG,
+    plot_bgcolor: PLOTLY_BG,
+    font: { color: PLOTLY_FONT, size: 11 },
+    xaxis: { gridcolor: PLOTLY_GRID, zerolinecolor: PLOTLY_GRID },
+    yaxis: { gridcolor: PLOTLY_GRID, zerolinecolor: PLOTLY_GRID },
+    legend: { bgcolor: "rgba(0,0,0,0)", font: { color: PLOTLY_FONT, size: 10 } },
+    margin: { l: 60, r: 30, t: 35, b: 50 },
+    height: 360,
+    hoverlabel: { bgcolor: "#1e293b", bordercolor: "#475569", font: { color: "#f1f5f9" } },
+  };
+}
+
+function scatterLayout(title) {
+  const l = baseLayout(title);
+  l.height = 440;
+  l.legend = {
+    bgcolor: "rgba(15,23,42,0.7)",
+    bordercolor: "#334155",
+    borderwidth: 1,
+    font: { color: PLOTLY_FONT, size: 10 },
+    x: 0.01, y: 0.99,
+  };
+  return l;
+}
+</script>
+</body>
+</html>
