@@ -119,11 +119,3 @@ Shows live summary statistics for the selected year — average internet usage, 
 ---
 
 ---
-
-## GitHub / Live URL
-
-> Add your GitHub repo URL or hosted web server link here before submission.
-
-```
-https://github.com/your-repo/dv-project-group2
-```
