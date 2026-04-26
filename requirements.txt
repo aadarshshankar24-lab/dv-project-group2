@@ -1,4 +1,5 @@
-flask
-pandas==2.2.3
-plotly
-gunicorn
+flask>=3.0.0
+pandas>=2.2.3
+plotly>=5.18.0
+gunicorn>=21.2.0
+numpy>=1.26.0
