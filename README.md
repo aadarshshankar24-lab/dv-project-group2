@@ -1,7 +1,7 @@
 # Global Trends in Internet Usage and Economic Development
 
 **Group 2** — Aadarsh Shankar, Divy Jhanjhari  
-**Course:** Data Visualization | **Due:** 02/09/26
+**Course:** Data Visualization |
 
 ---
 ## How to Run
